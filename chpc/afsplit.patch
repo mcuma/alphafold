@@ -1,0 +1,44 @@
+144,146d143
+< flags.DEFINE_integer('recycling', 3, 'Set number of recyclings')
+< flags.DEFINE_boolean('run_feature', False, 'Calculate MSA and template to generate '
+<                      'feature')
+186,187c183
+<     models_to_relax: ModelsToRelax,
+<     run_feature: bool):
+---
+>     models_to_relax: ModelsToRelax):
+200,214c196,198
+<   features_output_path = os.path.join(output_dir, 'features.pkl')
+<   logging.info(':Features output file %s', features_output_path)
+<  
+<   # If we already have feature.pkl file, skip the MSA and template finding step
+<   if os.path.exists(features_output_path):
+<     feature_dict = pickle.load(open(features_output_path, 'rb'))
+<   
+<   else:
+<     feature_dict = data_pipeline.process(
+<         input_fasta_path=fasta_path,
+<         msa_output_dir=msa_output_dir)
+<     # Write out features as a pickled dictionary.
+<     with open(features_output_path, 'wb') as f:
+<         pickle.dump(feature_dict, f, protocol=4)
+< 
+---
+>   feature_dict = data_pipeline.process(
+>       input_fasta_path=fasta_path,
+>       msa_output_dir=msa_output_dir)
+217,218c201,204
+<   if run_feature:    # if not run_feature, skip the rest of the function
+<     return 0
+---
+>   # Write out features as a pickled dictionary.
+>   features_output_path = os.path.join(output_dir, 'features.pkl')
+>   with open(features_output_path, 'wb') as f:
+>     pickle.dump(feature_dict, f, protocol=4)
+466,468c452,453
+<         models_to_relax=FLAGS.models_to_relax,
+<         run_feature = FLAGS.run_feature)
+<     logging.info('%s AlphaFold structure prediction COMPLETE', fasta_name)
+---
+>         models_to_relax=FLAGS.models_to_relax)
+> 

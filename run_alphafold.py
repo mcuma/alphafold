@@ -142,6 +142,9 @@ flags.DEFINE_boolean('use_gpu_relax', None, 'Whether to relax on GPU. '
                      'Relax on GPU can be much faster than CPU, so it is '
                      'recommended to enable if possible. GPUs must be available'
                      ' if this setting is enabled.')
+flags.DEFINE_integer('recycling', 3, 'Set number of recyclings')
+flags.DEFINE_boolean('run_feature', False, 'Calculate MSA and template to generate '
+                     'feature')
 
 FLAGS = flags.FLAGS
 
@@ -253,15 +256,25 @@ def predict_structure(
 
   # Get features.
   t_0 = time.time()
-  feature_dict = data_pipeline.process(
-      input_fasta_path=fasta_path,
-      msa_output_dir=msa_output_dir)
+  features_output_path = os.path.join(output_dir, 'features.pkl')
+  logging.info(':Features output file %s', features_output_path)
+ 
+  # If we already have feature.pkl file, skip the MSA and template finding step
+  if os.path.exists(features_output_path):
+    feature_dict = pickle.load(open(features_output_path, 'rb'))
+  
+  else:
+    feature_dict = data_pipeline.process(
+        input_fasta_path=fasta_path,
+        msa_output_dir=msa_output_dir)
+    # Write out features as a pickled dictionary.
+    with open(features_output_path, 'wb') as f:
+        pickle.dump(feature_dict, f, protocol=4)
+
   timings['features'] = time.time() - t_0
 
-  # Write out features as a pickled dictionary.
-  features_output_path = os.path.join(output_dir, 'features.pkl')
-  with open(features_output_path, 'wb') as f:
-    pickle.dump(feature_dict, f, protocol=4)
+  if run_feature:    # if not run_feature, skip the rest of the function
+    return 0
 
   unrelaxed_pdbs = {}
   unrelaxed_proteins = {}

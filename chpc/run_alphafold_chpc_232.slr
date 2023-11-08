@@ -1,0 +1,28 @@
+#!/bin/bash
+#SBATCH -t 8:00:00
+#SBATCH -n 16
+#SBATCH -N 1
+#SBATCH -p notchpeak-shared-short
+#SBATCH -A notchpeak-shared-short
+#SBATCH --mem=128G
+
+# this script runs the first, CPU intensive, part of AlphaFold
+ml purge
+ml alphafold/2.3.2
+
+# put the name of the fasta file here
+export FASTA_FILE="t1050.fasta"
+export OUTPUT_DIR="out"
+# copy some of the databases to the RAM disk for faster execution
+/uufs/chpc.utah.edu/sys/installdir/alphafold/db_to_tmp_230.sh
+
+SCRDB=/scratch/general/vast/app-repo/alphafold
+TMPDB=/tmp/$SLURM_JOBID
+
+sbatch -d afterok:$SLURM_JOBID run_alphafold_chpc_232_2.slr 
+
+# explicit run of run_alphafold pointing to the appropriate databases on the RAM disk
+singularity exec /uufs/chpc.utah.edu/sys/installdir/alphafold/2.3.2/alphafold-unl-2.3.2.sif /app/run_alphafold.sh --data_dir=$SCRDB --uniref90_database_path=$SCRDB/uniref90/uniref90.fasta --uniref30_database_path=$TMPDB/UniRef30_2021_03 --mgnify_database_path=$SCRDB/mgnify/mgy_clusters_2022_05.fa --bfd_database_path=$TMPDB/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt --pdb70_database_path=$TMPDB/pdb70 --template_mmcif_dir=$SCRDB/pdb_mmcif/mmcif_files --obsolete_pdbs_path=$SCRDB/pdb_mmcif/obsolete.dat --use_gpu_relax --fasta_paths=$FASTA_FILE --output_dir=$OUTPUT_DIR --max_template_date=2022-01-01 --run_feature=1
+
+rm -rf $TMPDB
+

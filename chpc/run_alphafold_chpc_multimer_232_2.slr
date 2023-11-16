@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH -t 24:00:00
+#SBATCH -n 4
+#SBATCH -N 1
+#SBATCH -p notchpeak-gpu
+#SBATCH -A notchpeak-gpu
+#SBATCH --gres=gpu:3090:1
+#SBATCH --mem=32G
+
+# this script runs the first, CPU intensive, part of AlphaFold
+ml purge
+ml alphafold/2.3.2
+
+# change this to point to your FASTA file
+FASTA_FILE=ACLY_PKD1Ctail.txt
+mkdir ACLY_PKD1Ctail
+OUTPUT_DIR=ACLY_PKD1Ctail
+
+# no use of databases so no need to create them in /tmp
+SCRDB=/scratch/general/vast/app-repo/alphafold
+TMPDB=/scratch/general/vast/app-repo/alphafold
+
+# run_alphafold_full.sh is an alias that includes the list of the full databases in the argument list, so one only needs to provide the run specific runtime options
+run_alphafold_red.sh --fasta_paths=$FASTA_FILE --max_template_date=2022-06-27 --output_dir=$OUTPUT_DIR --use_gpu_relax --model_preset=multimer --db_preset=reduced_dbs

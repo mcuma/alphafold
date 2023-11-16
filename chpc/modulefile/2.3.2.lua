@@ -3,10 +3,14 @@ help(
 [[
 To start Alphafold, run "run_alphafold.sh"
 To see Alphafold runtime options, run "run_alphafold.sh --help"
-The database paths are in the AFPATH environment variable
+The database paths are in the AFDATA environment variable
+We provide two scripts that explicitly point to all the needed databases, so one only needs to supply additional AF arguments such as the FASTA file name, etc.:
+  "run_alphafold_full.sh" - runs AF with full databases
+  "run_alphafold_red.sh" - runs AF with reduced databases
+For detailed documentation and important performance aspects see https://www.chpc.utah.edu/documentation/software/alphafold.php
 ]])
 
--- built from https://hub.docker.com/r/uvarc/alphafold
+-- built from docker://unlhcc/alphafold:2.3.2
 
 depends_on("singularity")
 local AFPATH="/uufs/chpc.utah.edu/sys/installdir/alphafold/2.3.2"
@@ -19,12 +23,9 @@ end
 setenv("AFDATA",AFDATA)
 local AF_ARGS="--data_dir=" .. AFDATA .. " --uniref90_database_path=" .. AFDATA .. "/uniref90/uniref90.fasta" .. " --mgnify_database_path=" .. AFDATA .. "/mgnify/mgy_clusters_2022_05.fa" .. " --template_mmcif_dir=" .. AFDATA .. "/pdb_mmcif/mmcif_files" .. " --obsolete_pdbs_path=" .. AFDATA .. "/pdb_mmcif/obsolete.dat"
 local AF_ARGS_TMP=" --uniref30_database_path=$TMPDB/uniref30/UniRef30_2021_03 --bfd_database_path=$TMPDB/bfd/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt --pdb70_database_path=$TMPDB/pdb70/pdb70"
-local AF_ARGS_RED="--pdb70_database_path=$TMPDB/pdb70/pdb70 --small_bfd_database_path=$TMPDB/small_bfd/bfd-first_non_consensus_sequences.fasta --pdb_seqres_database_path=$TMPDB/pdb_seqres --uniprot_database_path=$TMPDB/uniprot"
+local AF_ARGS_RED=" --small_bfd_database_path=$TMPDB/small_bfd/bfd-first_non_consensus_sequences.fasta --pdb_seqres_database_path=$TMPDB/pdb_seqres/pdb_seqres.txt --uniprot_database_path=$TMPDB/uniprot --uniprot_database_path=/scratch/general/vast/app-repo/alphafold/uniprot/uniprot.fasta"
 
 set_shell_function("shellAlphafold",'singularity shell --nv -s /bin/bash ' .. AFPATH .. '/' .. AFCONT,"singularity shell --nv -s /bin/bash " .. AFPATH .. "/" .. AFCONT)
--- set_shell_function("run_alphafold.sh",'singularity exec --nv -B .:/etc ' .. BBPATH .. '/alphafold20.sif /app/run_alphafold.sh ' .. AF_ARGS .. '"$@"',"singularity exec --nv -B .:/etc " .. BBPATH .. "/alphafold20.sif /app/run_alphafold.sh " .. AF_ARGS .. "$*")
--- set_shell_function("run_alphafold.sh",'singularity exec --nv ' .. AFPATH .. '/' .. AFCONT .. ' /app/run_alphafold.sh =' .. AF_ARGS .. '" $@"',"singularity exec --nv " .. AFPATH .. "/" .. AFCONT .. " /app/run_alphafold.sh " .. AF_ARGS .. " $*")
---set_shell_function("run_alphafold_full.sh",'singularity exec --nv ' .. AFPATH .. '/' .. AFCONT .. ' /app/run_alphafold.sh ' .. AF_ARGS,"singularity exec --nv " .. AFPATH .. "/" .. AFCONT .. " /app/run_alphafold.sh " .. AF_ARGS)
 set_shell_function("run_alphafold_red.sh",'singularity exec --nv ' .. AFPATH .. '/' .. AFCONT .. ' /app/run_alphafold.sh ' .. AF_ARGS .. AF_ARGS_RED .. ' $@',"singularity exec --nv " .. AFPATH .. "/" .. AFCONT .. " /app/run_alphafold.sh " .. AF_ARGS .. AF_ARGS_RED)
 set_shell_function("run_alphafold_full.sh",'singularity exec --nv ' .. AFPATH .. '/' .. AFCONT .. ' /app/run_alphafold.sh ' .. AF_ARGS .. AF_ARGS_TMP .. ' $@',"singularity exec --nv " .. AFPATH .. "/" .. AFCONT .. " /app/run_alphafold.sh " .. AF_ARGS .. AF_ARGS_TMP)
 set_shell_function("run_alphafold.sh",'singularity exec --nv ' .. AFPATH .. '/' .. AFCONT .. ' /app/run_alphafold.sh' .. ' $@',"singularity exec --nv " .. AFPATH .. "/" .. AFCONT .. " /app/run_alphafold.sh")

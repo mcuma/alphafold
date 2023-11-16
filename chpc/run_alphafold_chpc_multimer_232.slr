@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH -t 8:00:00
+#SBATCH -n 16
+#SBATCH -N 1
+#SBATCH -p notchpeak-shared-short
+#SBATCH -A notchpeak-shared-short
+#SBATCH --mem=128G
+
+# this script runs the first, CPU intensive, part of AlphaFold
+ml purge
+ml alphafold/2.3.2
+
+# copy some of the databases to the RAM disk
+/uufs/chpc.utah.edu/sys/installdir/alphafold/db_to_tmp_232_reduced.sh
+
+# change this to point to your FASTA file
+FASTA_FILE=ACLY_PKD1Ctail.txt
+mkdir ACLY_PKD1Ctail
+OUTPUT_DIR=ACLY_PKD1Ctail
+
+SCRDB=/scratch/general/vast/app-repo/alphafold
+TMPDB=/tmp/$SLURM_JOBID
+
+sbatch -d afterok:$SLURM_JOBID run_alphafold_chpc_multimer_232_2.sh
+
+# run_alphafold_full.sh is an alias that includes the list of the full databases in the argument list, so one only needs to provide the run specific runtime options
+run_alphafold_red.sh --fasta_paths=$FASTA_FILE --max_template_date=2022-06-27 --output_dir=$OUTPUT_DIR --use_gpu_relax --model_preset=multimer --db_preset=reduced_dbs --run_feature=1
